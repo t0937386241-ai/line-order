@@ -62,8 +62,9 @@
         });
       }
     }).catch((err) => {
-      document.getElementById("loading").innerHTML = "<span style='color:red;'>LINE 載入失敗：" + err.message + "</span>";
-    });
+  // 把完整的錯誤代碼和訊息倒出來
+  document.getElementById("loading").innerHTML = "<span style='color:red;'>LINE 載入失敗！<br>錯誤類型：" + err.name + "<br>詳細原因：" + err.message + "</span>";
+});
 
     function sendData() {
       const submitBtn = document.getElementById("submitBtn");
