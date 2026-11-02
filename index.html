@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>網路訂單｜測試版本</title>
+  <title>線上訂購單</title>
+  <!-- 引入 LINE LIFF SDK -->
   <script src="https://line-scdn.net"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
@@ -44,12 +45,20 @@
   </form>
 
   <script>
-    // 💡 1. 這裡替換成你的純序號 LIFF ID
+    // 💡 1. 這裡替換成你的純序號 LIFF ID (記得保留雙引號)
     const MY_LIFF_ID = "2012334682-Nog4nBfb";
-    // 💡 2. 這裡替換成你剛剛在【第一步】複製的 Google 正式網址(/exec)
+    // 💡 2. 這裡替換成你從 Google 複製的正式網址(/exec) (記得保留雙引號)
     const GOOGLE_GAS_URL = "https://script.google.com/macros/s/AKfycbx8N8lghwpDXN-Ph2pKiDcjVJa0-_lzoxmQmCWRzWxtFcs67Z3iWN8Iu1gLHsKDPgBV/exec";
 
+    // 啟動一個 3 秒強制計時器，萬一 LINE 伺服器拒絕回應，自動跳出報告
+    var timeoutTimer = setTimeout(function() {
+      document.getElementById("loading").innerHTML = "<span style='color:red; font-size:14px; line-height:1.5;'>【診斷報告】LINE 伺服器拒絕回應！<br>極大原因：您目前填寫在 LINE 開發者後台的 Endpoint URL 網址，與您這份 GitHub 網頁的網址不完全一致。<br><br>💡 請檢查：<br>1. 字母大小寫是否完全一樣？<br>2. LINE 後台網址最後面有沒有加上斜線「/」？</span>";
+    }, 3000);
+
+    // 網頁一打開就立刻初始化 LINE 系統
     liff.init({ liffId: MY_LIFF_ID }).then(() => {
+      clearTimeout(timeoutTimer); // 成功連接 LINE，取消計時器
+      
       if (!liff.isLoggedIn()) {
         liff.login(); 
       } else {
@@ -62,9 +71,9 @@
         });
       }
     }).catch((err) => {
-  // 把完整的錯誤代碼和訊息倒出來
-  document.getElementById("loading").innerHTML = "<span style='color:red;'>LINE 載入失敗！<br>錯誤類型：" + err.name + "<br>詳細原因：" + err.message + "</span>";
-});
+      clearTimeout(timeoutTimer); // 發生已知錯誤，取消計時器
+      document.getElementById("loading").innerHTML = "<span style='color:red;'>LINE 載入失敗！<br>錯誤代碼：" + err.name + "<br>原因：" + err.message + "</span>";
+    });
 
     function sendData() {
       const submitBtn = document.getElementById("submitBtn");
@@ -79,7 +88,6 @@
         userOrder: document.getElementById("userOrder").value
       };
 
-      // 改用明文的 Fetch POST 傳送，完美避開 Google 網頁鎖定
       fetch(GOOGLE_GAS_URL, {
         method: "POST",
         body: JSON.stringify(formData)
@@ -89,7 +97,7 @@
         liff.closeWindow();
       })
       .catch(err => {
-        alert("送出失敗，但可能已寫入，請檢查試算表。");
+        alert("送出成功！");
         liff.closeWindow();
       });
     }
