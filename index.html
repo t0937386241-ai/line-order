@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>網路訂單｜測試版本</title>
+  <script src="https://line-scdn.net"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input, textarea { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+    button { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; }
+    button:disabled { background-color: #ccc; }
+    #loading { color: blue; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h3>歡迎訂購！</h3>
+  <p id="loading">正在載入 LINE 帳號資訊，請稍候...</p>
+
+  <form id="orderForm" style="display:none;">
+    <input type="hidden" id="lineName" name="lineName">
+    <input type="hidden" id="lineUid" name="lineUid">
+
+    <div class="form-group">
+      <label>您的 LINE 暱稱（系統已自動辨識）：</label>
+      <input type="text" id="showLineName" disabled style="background:#e9ecef;">
+    </div>
+    <div class="form-group">
+      <label>訂購人姓名：</label>
+      <input type="text" id="userName" required>
+    </div>
+    <div class="form-group">
+      <label>聯絡電話：</label>
+      <input type="tel" id="userPhone" required>
+    </div>
+    <div class="form-group">
+      <label>訂購品項與數量：</label>
+      <textarea id="userOrder" rows="4" placeholder="例如：排骨飯x1" required></textarea>
+    </div>
+    <button type="button" id="submitBtn" onclick="sendData()">送出訂單</button>
+  </form>
+
+  <script>
+    // 💡 1. 這裡替換成你的純序號 LIFF ID
+    const MY_LIFF_ID = "2012334682-Nog4nBfb";
+    // 💡 2. 這裡替換成你剛剛在【第一步】複製的 Google 正式網址(/exec)
+    const GOOGLE_GAS_URL = "https://script.google.com/macros/s/AKfycbx8N8lghwpDXN-Ph2pKiDcjVJa0-_lzoxmQmCWRzWxtFcs67Z3iWN8Iu1gLHsKDPgBV/exec";
+
+    liff.init({ liffId: MY_LIFF_ID }).then(() => {
+      if (!liff.isLoggedIn()) {
+        liff.login(); 
+      } else {
+        liff.getProfile().then(profile => {
+          document.getElementById("lineName").value = profile.displayName;
+          document.getElementById("showLineName").value = profile.displayName;
+          document.getElementById("lineUid").value = profile.userId;
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("orderForm").style.display = "block";
+        });
+      }
+    }).catch((err) => {
+      document.getElementById("loading").innerHTML = "<span style='color:red;'>LINE 載入失敗：" + err.message + "</span>";
+    });
+
+    function sendData() {
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = true;
+      submitBtn.innerText = "提交中...";
+
+      const formData = {
+        lineName: document.getElementById("lineName").value,
+        lineUid: document.getElementById("lineUid").value,
+        userName: document.getElementById("userName").value,
+        userPhone: document.getElementById("userPhone").value,
+        userOrder: document.getElementById("userOrder").value
+      };
+
+      // 改用明文的 Fetch POST 傳送，完美避開 Google 網頁鎖定
+      fetch(GOOGLE_GAS_URL, {
+        method: "POST",
+        body: JSON.stringify(formData)
+      })
+      .then(res => {
+        alert("提交成功！");
+        liff.closeWindow();
+      })
+      .catch(err => {
+        alert("送出失敗，但可能已寫入，請檢查試算表。");
+        liff.closeWindow();
+      });
+    }
+  </script>
+</body>
+</html>
