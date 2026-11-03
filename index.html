@@ -8,11 +8,18 @@
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; background: #f5f5f7; }
     .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
-    h2 { margin-top: 0; color: #333; }
-    .user-info { margin-bottom: 15px; padding: 10px; background: #eef6ff; border-radius: 8px; font-size: 14px; color: #1a73e8; }
+    h2 { margin-top: 0; color: #333; text-align: center; }
+    .user-info { margin-bottom: 15px; padding: 10px; background: #eef6ff; border-radius: 8px; font-size: 14px; color: #1a73e8; text-align: center; }
     .form-group { margin-bottom: 15px; }
-    label { display: block; margin-bottom: 5px; font-weight: bold; }
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+    input[type="text"], input[type="tel"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    .product-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+    .product-item:last-child { border-bottom: none; }
+    .product-name { font-size: 16px; }
+    .product-price { color: #888; font-size: 14px; }
+    .qty-input { width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 6px; }
+    .total-box { background: #fff8f8; padding: 15px; border-radius: 8px; text-align: right; font-weight: bold; font-size: 18px; margin-bottom: 15px; color: #333; }
+    #totalAmount { color: #e93524; font-size: 22px; margin: 0 5px; }
     button { width: 100%; padding: 12px; background: #06C755; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
     button:disabled { background: #ccc; }
   </style>
@@ -20,18 +27,60 @@
 <body>
 
 <div class="card">
-  <h2>商品訂購單</h2>
+  <h2>專屬訂購單</h2>
   <div class="user-info" id="userDisplay">正在驗證 LINE 身分...</div>
   
   <form id="orderForm">
     <div class="form-group">
-      <label>訂購品項與數量</label>
-      <textarea id="items" rows="3" placeholder="例如：商品 A x 2, 商品 B x 1" required></textarea>
+      <label>姓名</label>
+      <input type="text" id="customerName" placeholder="請輸入姓名+先生/小姐" required>
     </div>
     
     <div class="form-group">
-      <label>預計總金額</label>
-      <input type="number" id="totalAmount" placeholder="請輸入金額" required>
+      <label>手機</label>
+      <input type="tel" id="customerPhone" placeholder="例如：0912345678" required>
+    </div>
+    
+    <div class="form-group">
+      <label>訂購品項 (請填寫數量)</label>
+      <!-- 品項 1 -->
+      <div class="product-item">
+        <div>
+          <div class="product-name">高麗菜豬肉水餃</div>
+          <div class="product-price">$330 / 袋</div>
+        </div>
+        <input type="number" class="qty-input" data-name="高麗菜豬肉水餃" data-price="330" min="0" value="0">
+      </div>
+      <!-- 品項 2 -->
+      <div class="product-item">
+        <div>
+          <div class="product-name">韭菜豬肉水餃</div>
+          <div class="product-price">$330 / 袋</div>
+        </div>
+        <input type="number" class="qty-input" data-name="韭菜豬肉水餃" data-price="330" min="0" value="0">
+      </div>
+    </div>
+      <!-- 品項 3 -->
+      <div class="product-item">
+        <div>
+          <div class="product-name">鮮蝦高麗菜水餃</div>
+          <div class="product-price">$450 / 袋</div>
+        </div>
+        <input type="number" class="qty-input" data-name="鮮蝦高麗菜水餃" data-price="450" min="0" value="0">
+      </div>
+    </div>
+     <!-- 品項 4 -->
+      <div class="product-item">
+        <div>
+          <div class="product-name">鮮蝦韭菜水餃</div>
+          <div class="product-price">$450 / 袋</div>
+        </div>
+        <input type="number" class="qty-input" data-name="鮮蝦韭菜水餃" data-price="450" min="0" value="0">
+      </div>
+    </div>
+
+    <div class="total-box">
+      總計：<span id="totalAmount">0</span> 元
     </div>
     
     <button type="submit" id="submitBtn" disabled>確認提交訂單</button>
@@ -39,30 +88,62 @@
 </div>
 
 <script>
-  // 替換為你的 LIFF ID 與 GAS URL
+  // ⚠️ 請在這裡換成你自己的 LIFF ID 與 GAS URL ⚠️
   const MY_LIFF_ID = "2012345831-YBYAH5L7";
   const GAS_URL = "https://script.google.com/macros/s/AKfycbytwIOQ34JtREvpztc_-dixa3uuH1nt8qp_3HsIWynahQN3P3wIGuBKyJyTI4nfoiN2pw/exec";
 
   let currentUser = { userId: "", displayName: "" };
+  let finalTotal = 0;
 
+  // 1. 自動計算總金額
+  const qtyInputs = document.querySelectorAll('.qty-input');
+  const totalDisplay = document.getElementById('totalAmount');
+
+  function calculateTotal() {
+    finalTotal = 0;
+    qtyInputs.forEach(input => {
+      const qty = parseInt(input.value) || 0;
+      const price = parseInt(input.getAttribute('data-price')) || 0;
+      finalTotal += (qty * price);
+    });
+    totalDisplay.innerText = finalTotal;
+  }
+
+  qtyInputs.forEach(input => {
+    input.addEventListener('input', calculateTotal);
+  });
+
+  // 2. 初始化 LIFF
   async function main() {
     await liff.init({ liffId: MY_LIFF_ID });
-    
-    if (!liff.isLoggedIn()) {
-      liff.login();
-      return;
-    }
+    if (!liff.isLoggedIn()) { liff.login(); return; }
     
     const profile = await liff.getProfile();
     currentUser.userId = profile.userId;
     currentUser.displayName = profile.displayName;
     
-    document.getElementById("userDisplay").innerText = `訂購人：${profile.displayName}`;
+    document.getElementById("userDisplay").innerText = `訂購帳號：${profile.displayName}`;
     document.getElementById("submitBtn").disabled = false;
   }
 
+  // 3. 提交表單資料
   document.getElementById("orderForm").addEventListener("submit", async (e) => {
     e.preventDefault();
+    
+    // 整理選擇的商品
+    let selectedItems = [];
+    qtyInputs.forEach(input => {
+      const qty = parseInt(input.value) || 0;
+      if (qty > 0) {
+        selectedItems.push(`${input.getAttribute('data-name')} x${qty}`);
+      }
+    });
+
+    if (selectedItems.length === 0) {
+      alert("請至少選擇一項商品數量！");
+      return;
+    }
+
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
     btn.innerText = "訂單傳送中...";
@@ -70,19 +151,18 @@
     const payload = {
       userId: currentUser.userId,
       displayName: currentUser.displayName,
-      items: document.getElementById("items").value,
-      totalAmount: document.getElementById("totalAmount").value
+      name: document.getElementById("customerName").value,
+      phone: document.getElementById("customerPhone").value,
+      items: selectedItems.join("\n"), // 品項之間用換行符號隔開
+      totalAmount: finalTotal
     };
 
     try {
-      const resp = await fetch(GAS_URL, {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
+      const resp = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
       const resData = await resp.json();
       
       if (resData.status === "success") {
-        alert(`訂單建立成功！單號：${resData.orderId}`);
+        alert(`訂單建立成功！`);
         liff.closeWindow();
       } else {
         alert("提交失敗，請重試");
@@ -90,7 +170,7 @@
         btn.innerText = "確認提交訂單";
       }
     } catch (err) {
-      alert("傳送發生錯誤");
+      alert("傳送發生錯誤，請檢查網路連線");
       btn.disabled = false;
       btn.innerText = "確認提交訂單";
     }
