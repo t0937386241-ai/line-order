@@ -31,62 +31,70 @@
   <div class="user-info" id="userDisplay">正在驗證 LINE 身分...</div>
   
   <form id="orderForm">
+    <!-- 姓名與稱謂 -->
     <div class="form-group">
-          <label>姓氏</label>
-          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-            <input type="text" id="customerName" placeholder="請輸入姓氏，並點選下列稱謂" required style="flex: 1;">
-          </div>
-          <div style="display: flex; gap: 20px; font-weight: normal;">
-            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-              <input type="radio" name="customerTitle" value="先生" checked> 先生
-            </label>
-            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
-              <input type="radio" name="customerTitle" value="小姐"> 小姐
-            </label>
-          </div>
+      <label>姓氏</label>
+      <div style="margin-bottom: 8px;">
+        <input type="text" id="customerName" placeholder="請輸入姓氏 + 點選下方稱謂" required>
+      </div>
+      <div style="display: flex; gap: 20px; font-weight: normal;">
+        <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+          <input type="radio" name="customerTitle" value="先生" checked> 先生
+        </label>
+        <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+          <input type="radio" name="customerTitle" value="小姐"> 小姐
+        </label>
+      </div>
     </div>
     
+    <!-- 聯絡電話 -->
     <div class="form-group">
       <label>手機號碼</label>
-      <input type="tel" id="customerPhone" placeholder="請輸入完整手機號碼，例如：0912345678" required>
+      <input type="tel" id="customerPhone" placeholder="請輸入有效的手機號碼，例如：0912345678" required>
     </div>
     
+    <!-- 訂購品項（獨立欄位區塊） -->
     <div class="form-group">
       <label>訂購品項 (請填寫數量)</label>
+      
       <!-- 品項 1 -->
       <div class="product-item">
         <div>
           <div class="product-name">🐷高麗菜豬肉水餃</div>
           <div class="product-price">$330 / 袋</div>
         </div>
-        <input type="number" class="qty-input" data-name="🐷高麗菜豬肉水餃" data-price="330" min="0" value="0">
+        <input type="number" id="qty1" class="qty-input" data-price="330" min="0" value="0">
       </div>
+      
       <!-- 品項 2 -->
       <div class="product-item">
         <div>
           <div class="product-name">🐷韭菜豬肉水餃</div>
           <div class="product-price">$330 / 袋</div>
         </div>
-        <input type="number" class="qty-input" data-name="🐷韭菜豬肉水餃" data-price="330" min="0" value="0">
+        <input type="number" id="qty2" class="qty-input" data-price="330" min="0" value="0">
       </div>
+      
       <!-- 品項 3 -->
       <div class="product-item">
         <div>
           <div class="product-name">🦐鮮蝦高麗菜水餃</div>
           <div class="product-price">$450 / 袋</div>
         </div>
-        <input type="number" class="qty-input" data-name="🦐鮮蝦高麗菜水餃" data-price="450" min="0" value="0">
+        <input type="number" id="qty3" class="qty-input" data-price="450" min="0" value="0">
       </div>
+      
       <!-- 品項 4 -->
       <div class="product-item">
         <div>
           <div class="product-name">🦐鮮蝦韭菜水餃</div>
           <div class="product-price">$450 / 袋</div>
         </div>
-        <input type="number" class="qty-input" data-name="🦐鮮蝦韭菜水餃" data-price="450" min="0" value="0">
+        <input type="number" id="qty4" class="qty-input" data-price="450" min="0" value="0">
       </div>
     </div>
 
+    <!-- 總計金額 -->
     <div class="total-box">
       總計：<span id="totalAmount">0</span> 元
     </div>
@@ -96,7 +104,7 @@
 </div>
 
 <script>
-  // ⚠️ 請在這裡換成你自己的 LIFF ID 與 GAS URL ⚠️
+  // ⚠️ 請修改為你自己的 LIFF ID 與 GAS URL ⚠️
   const MY_LIFF_ID = "2012345831-YBYAH5L7";
   const GAS_URL = "https://script.google.com/macros/s/AKfycbytwIOQ34JtREvpztc_-dixa3uuH1nt8qp_3HsIWynahQN3P3wIGuBKyJyTI4nfoiN2pw/exec";
 
@@ -123,86 +131,94 @@
 
   // 2. 初始化 LIFF
   async function main() {
-    await liff.init({ liffId: MY_LIFF_ID });
-    if (!liff.isLoggedIn()) { liff.login(); return; }
-    
-    const profile = await liff.getProfile();
-    currentUser.userId = profile.userId;
-    currentUser.displayName = profile.displayName;
-    
-    document.getElementById("userDisplay").innerText = `訂購帳號：${profile.displayName}`;
-    document.getElementById("submitBtn").disabled = false;
+    try {
+      await liff.init({ liffId: MY_LIFF_ID });
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+      
+      const profile = await liff.getProfile();
+      currentUser.userId = profile.userId;
+      currentUser.displayName = profile.displayName;
+      
+      document.getElementById("userDisplay").innerText = `訂購帳號：${profile.displayName}`;
+      document.getElementById("submitBtn").disabled = false;
+    } catch (err) {
+      document.getElementById("userDisplay").innerText = "LINE 驗證失敗，請開啟 LINE 再試";
+    }
   }
 
-// 3. 提交表單資料
-    document.getElementById("orderForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+  // 3. 提交表單資料
+  document.getElementById("orderForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    
+    const customerTitle = document.querySelector('input[name="customerTitle"]:checked').value;
+    const rawName = document.getElementById("customerName").value.trim();
+    const customerPhone = document.getElementById("customerPhone").value.trim();
+
+    // 驗證姓名
+    if (!rawName) {
+      alert("請填寫姓氏！");
+      document.getElementById("customerName").focus();
+      return;
+    }
+
+    // 驗證電話格式（9~12碼數字/空格/連字號）
+    const simplePhoneRegex = /^[\d\-\s]{9,12}$/;
+    if (!simplePhoneRegex.test(customerPhone)) {
+      alert("請輸入有效的聯絡電話（例如：0912345678）！");
+      document.getElementById("customerPhone").focus();
+      return;
+    }
+
+    // 取得各商品數量
+    const qty1 = parseInt(document.getElementById("qty1").value) || 0;
+    const qty2 = parseInt(document.getElementById("qty2").value) || 0;
+    const qty3 = parseInt(document.getElementById("qty3").value) || 0;
+    const qty4 = parseInt(document.getElementById("qty4").value) || 0;
+
+    if ((qty1 + qty2 + qty3 + qty4) === 0) {
+      alert("請至少選擇一項商品數量！");
+      return;
+    }
+
+    const btn = document.getElementById("submitBtn");
+    btn.disabled = true;
+    btn.innerText = "訂單傳送中...";
+
+    const payload = {
+      userId: currentUser.userId,
+      displayName: currentUser.displayName,
+      name: `${rawName} ${customerTitle}`,
+      phone: customerPhone,
+      item1: qty1,
+      item2: qty2,
+      item3: qty3,
+      item4: qty4,
+      totalAmount: finalTotal
+    };
+
+    try {
+      const resp = await fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      const resData = await resp.json();
       
-      const customerTitle = document.querySelector('input[name="customerTitle"]:checked').value;
-      const rawName = document.getElementById("customerName").value.trim();
-      const customerPhone = document.getElementById("customerPhone").value.trim();
-
-      if (!rawName) {
-        alert("請填寫收件姓名！");
-        document.getElementById("customerName").focus();
-        return;
-      }
-
-      const simplePhoneRegex = /^[\d\-\s]{9,12}$/;
-      if (!simplePhoneRegex.test(customerPhone)) {
-        alert("請輸入有效的聯絡電話（例如：0912345678）！");
-        document.getElementById("customerPhone").focus();
-        return;
-      }
-
-      // 取得各個商品的數量（假設你的 input 分別加上了 id）
-      const qty1 = parseInt(document.getElementById("qty1").value) || 0;
-      const qty2 = parseInt(document.getElementById("qty2").value) || 0;
-      const qty3 = parseInt(document.getElementById("qty3").value) || 0;
-      const qty4 = parseInt(document.getElementById("qty4").value) || 0;
-
-      if ((qty1 + qty2 + qty3 + qty4) === 0) {
-        alert("請至少選擇一項商品數量！");
-        return;
-      }
-
-      const btn = document.getElementById("submitBtn");
-      btn.disabled = true;
-      btn.innerText = "訂單傳送中...";
-
-const payload = {
-        userId: currentUser.userId,
-        displayName: currentUser.displayName,
-        name: `${rawName} ${customerTitle}`,
-        phone: customerPhone,
-        item1: qty1,
-        item2: qty2,
-        item3: qty3,
-        item4: qty4,
-        totalAmount: finalTotal
-      };
-
-      try {
-        // ✅ 正確的寫法
-        const resp = await fetch(GAS_URL, {
-          method: "POST",
-          body: JSON.stringify(payload)
-        });
-        const resData = await resp.json();
-        
-        if (resData.status === "success") {
-          alert(`訂單建立成功！單號：${resData.orderId}`);
-          liff.closeWindow();
-        } else {
-          alert("提交失敗，請重試");
-          btn.disabled = false;
-          btn.innerText = "確認提交訂單";
-        }
-      } catch (err) {
-        alert("傳送發生錯誤，請檢查網路連線");
+      if (resData.status === "success") {
+        alert(`訂單建立成功！單號：${resData.orderId}`);
+        liff.closeWindow();
+      } else {
+        alert("提交失敗，請重試");
         btn.disabled = false;
         btn.innerText = "確認提交訂單";
       }
+    } catch (err) {
+      alert("傳送發生錯誤，請檢查網路連線或重試");
+      btn.disabled = false;
+      btn.innerText = "確認提交訂單";
+    }
   });
 
   main();
