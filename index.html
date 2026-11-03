@@ -206,9 +206,9 @@ const btn = document.getElementById("submitBtn");
         body: JSON.stringify(payload)
       });
       
-      const delayPromise = new Promise(resolve => setTimeout(resolve, 5000)); // 5秒延遲
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 3000)); // 3秒延遲
 
-      // 等待網路請求完成，且至少經過 5 秒
+      // 等待網路請求完成，且至少經過 3 秒
       const [resp] = await Promise.all([fetchPromise, delayPromise]);
       const resData = await resp.json();
       
