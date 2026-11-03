@@ -32,9 +32,9 @@
   
   <form id="orderForm">
     <div class="form-group">
-          <label>姓氏+稱謂</label>
+          <label>姓氏</label>
           <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
-            <input type="text" id="customerName" placeholder="請輸入姓氏" required style="flex: 1;">
+            <input type="text" id="customerName" placeholder="請輸入姓氏，並點選下列稱謂" required style="flex: 1;">
           </div>
           <div style="display: flex; gap: 20px; font-weight: normal;">
             <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
@@ -47,8 +47,8 @@
     </div>
     
     <div class="form-group">
-      <label>手機</label>
-      <input type="tel" id="customerPhone" placeholder="例如：0912345678" required>
+      <label>手機號碼</label>
+      <input type="tel" id="customerPhone" placeholder="請輸入完整手機號碼，例如：0912345678" required>
     </div>
     
     <div class="form-group">
@@ -144,7 +144,7 @@
 
       // 驗證姓名是否空白
       if (!customerName) {
-        alert("請填寫收件姓名！");
+        alert("請填寫姓氏！");
         document.getElementById("customerName").focus();
         return;
       }
