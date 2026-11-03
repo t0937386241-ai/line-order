@@ -56,34 +56,34 @@
       <!-- 品項 1 -->
       <div class="product-item">
         <div>
-          <div class="product-name">高麗菜豬肉水餃</div>
+          <div class="product-name">🐷高麗菜豬肉水餃</div>
           <div class="product-price">$330 / 袋</div>
         </div>
-        <input type="number" class="qty-input" data-name="高麗菜豬肉水餃" data-price="330" min="0" value="0">
+        <input type="number" id="qty1" class="qty-input" data-name="🐷高麗菜豬肉水餃" data-price="330" min="0" value="0">
       </div>
       <!-- 品項 2 -->
       <div class="product-item">
         <div>
-          <div class="product-name">韭菜豬肉水餃</div>
+          <div class="product-name">🐷韭菜豬肉水餃</div>
           <div class="product-price">$330 / 袋</div>
         </div>
-        <input type="number" class="qty-input" data-name="韭菜豬肉水餃" data-price="330" min="0" value="0">
+        <input type="number" id="qty2"  class="qty-input" data-name="🐷韭菜豬肉水餃" data-price="330" min="0" value="0">
       </div>
       <!-- 品項 3 -->
       <div class="product-item">
         <div>
-          <div class="product-name">鮮蝦高麗菜水餃</div>
+          <div class="product-name">🦐鮮蝦高麗菜水餃</div>
           <div class="product-price">$450 / 袋</div>
         </div>
-        <input type="number" class="qty-input" data-name="鮮蝦高麗菜水餃" data-price="450" min="0" value="0">
+        <input type="number" id="qty3" class="qty-input" data-name="🦐鮮蝦高麗菜水餃" data-price="450" min="0" value="0">
       </div>
       <!-- 品項 4 -->
       <div class="product-item">
         <div>
-          <div class="product-name">鮮蝦韭菜水餃</div>
+          <div class="product-name">🦐鮮蝦韭菜水餃</div>
           <div class="product-price">$450 / 袋</div>
         </div>
-        <input type="number" class="qty-input" data-name="鮮蝦韭菜水餃" data-price="450" min="0" value="0">
+        <input type="number" id="qty4"  class="qty-input" data-name="🦐鮮蝦韭菜水餃" data-price="450" min="0" value="0">
       </div>
     </div>
 
@@ -138,57 +138,53 @@
     document.getElementById("orderForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       
-      // 取得姓名與電話並去除前後空白
-      const customerName = document.getElementById("customerName").value.trim();
+      const customerTitle = document.querySelector('input[name="customerTitle"]:checked').value;
+      const rawName = document.getElementById("customerName").value.trim();
       const customerPhone = document.getElementById("customerPhone").value.trim();
 
-      // 驗證姓名是否空白
-      if (!customerName) {
-        alert("請填寫姓氏！");
+      if (!rawName) {
+        alert("請填寫收件姓名！");
         document.getElementById("customerName").focus();
         return;
       }
 
-      // 驗證電話格式（台灣手機通常為 09 開頭共 10 碼，或是市話；這裡檢查是否為 9 到 10 碼的純數字或標準格式）
-      const phoneRegex = /^[09]{2}\d{8}$|^0\d{1,2}-?\d{6,8}$/; 
-      // 簡單寬鬆版（只要是 9~10 碼數字或帶有 - 符號皆可）：
       const simplePhoneRegex = /^[\d\-\s]{9,12}$/;
-
       if (!simplePhoneRegex.test(customerPhone)) {
         alert("請輸入有效的聯絡電話（例如：0912345678）！");
         document.getElementById("customerPhone").focus();
         return;
       }
 
-      // 整理選擇的商品
-      let selectedItems = [];
-      qtyInputs.forEach(input => {
-        const qty = parseInt(input.value) || 0;
-        if (qty > 0) {
-          selectedItems.push(`${input.getAttribute('data-name')} x${qty}`);
-        }
-      });
+      // 取得各個商品的數量（假設你的 input 分別加上了 id）
+      const qty1 = parseInt(document.getElementById("qty1").value) || 0;
+      const qty2 = parseInt(document.getElementById("qty2").value) || 0;
+      const qty3 = parseInt(document.getElementById("qty3").value) || 0;
+      const qty4 = parseInt(document.getElementById("qty4").value) || 0;
 
-      if (selectedItems.length === 0) {
+      if ((qty1 + qty2 + qty3 + qty4) === 0) {
         alert("請至少選擇一項商品數量！");
         return;
       }
 
-    const btn = document.getElementById("submitBtn");
-    btn.disabled = true;
-    btn.innerText = "訂單傳送中...";
+      const btn = document.getElementById("submitBtn");
+      btn.disabled = true;
+      btn.innerText = "訂單傳送中...";
 
-    const payload = {
-      userId: currentUser.userId,
-      displayName: currentUser.displayName,
-      name: document.getElementById("customerName").value,
-      phone: document.getElementById("customerPhone").value,
-      items: selectedItems.join("\n"), // 品項之間用換行符號隔開
-      totalAmount: finalTotal
-    };
+      const payload = {
+        userId: currentUser.userId,
+        displayName: currentUser.displayName,
+        name: `${rawName} ${customerTitle}`,
+        phone: customerPhone,
+        item1: qty1,
+        item2: qty2,
+        item3: qty3,
+        item4: qty4,
+        totalAmount: finalTotal
+      };
 
+     
     try {
-      const resp = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
+      const resp = andfetch(GAS_URL, payload);
       const resData = await resp.json();
       
       if (resData.status === "success") {
