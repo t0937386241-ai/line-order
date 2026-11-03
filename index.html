@@ -32,8 +32,18 @@
   
   <form id="orderForm">
     <div class="form-group">
-      <label>姓名</label>
-      <input type="text" id="customerName" placeholder="請輸入姓名+先生/小姐" required>
+          <label>收件姓名與稱謂</label>
+          <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 8px;">
+            <input type="text" id="customerName" placeholder="請輸入真實姓名" required style="flex: 1;">
+          </div>
+          <div style="display: flex; gap: 20px; font-weight: normal;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+              <input type="radio" name="customerTitle" value="先生" checked> 先生
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+              <input type="radio" name="customerTitle" value="小姐"> 小姐
+            </label>
+          </div>
     </div>
     
     <div class="form-group">
@@ -124,23 +134,45 @@
     document.getElementById("submitBtn").disabled = false;
   }
 
-  // 3. 提交表單資料
-  document.getElementById("orderForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    
-    // 整理選擇的商品
-    let selectedItems = [];
-    qtyInputs.forEach(input => {
-      const qty = parseInt(input.value) || 0;
-      if (qty > 0) {
-        selectedItems.push(`${input.getAttribute('data-name')} x${qty}`);
-      }
-    });
+// 3. 提交表單資料
+    document.getElementById("orderForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      
+      // 取得姓名與電話並去除前後空白
+      const customerName = document.getElementById("customerName").value.trim();
+      const customerPhone = document.getElementById("customerPhone").value.trim();
 
-    if (selectedItems.length === 0) {
-      alert("請至少選擇一項商品數量！");
-      return;
-    }
+      // 驗證姓名是否空白
+      if (!customerName) {
+        alert("請填寫收件姓名！");
+        document.getElementById("customerName").focus();
+        return;
+      }
+
+      // 驗證電話格式（台灣手機通常為 09 開頭共 10 碼，或是市話；這裡檢查是否為 9 到 10 碼的純數字或標準格式）
+      const phoneRegex = /^[09]{2}\d{8}$|^0\d{1,2}-?\d{6,8}$/; 
+      // 簡單寬鬆版（只要是 9~10 碼數字或帶有 - 符號皆可）：
+      const simplePhoneRegex = /^[\d\-\s]{9,12}$/;
+
+      if (!simplePhoneRegex.test(customerPhone)) {
+        alert("請輸入有效的聯絡電話（例如：0912345678）！");
+        document.getElementById("customerPhone").focus();
+        return;
+      }
+
+      // 整理選擇的商品
+      let selectedItems = [];
+      qtyInputs.forEach(input => {
+        const qty = parseInt(input.value) || 0;
+        if (qty > 0) {
+          selectedItems.push(`${input.getAttribute('data-name')} x${qty}`);
+        }
+      });
+
+      if (selectedItems.length === 0) {
+        alert("請至少選擇一項商品數量！");
+        return;
+      }
 
     const btn = document.getElementById("submitBtn");
     btn.disabled = true;
