@@ -183,9 +183,9 @@
       return;
     }
 
-    const btn = document.getElementById("submitBtn");
+const btn = document.getElementById("submitBtn");
     btn.disabled = true;
-    btn.innerText = "訂單傳送中...";
+    btn.innerText = "訂單傳送中..."; // 1. 一開始先顯示傳送中
 
     const payload = {
       userId: currentUser.userId,
@@ -200,13 +200,20 @@
     };
 
     try {
-      const resp = await fetch(GAS_URL, {
+      // 同時發送請求並建立一個至少 5 秒的延遲計時器，讓買家看得到「訂單傳送中...」
+      const fetchPromise = fetch(GAS_URL, {
         method: "POST",
         body: JSON.stringify(payload)
       });
+      
+      const delayPromise = new Promise(resolve => setTimeout(resolve, 5000)); // 5秒延遲
+
+      // 等待網路請求完成，且至少經過 5 秒
+      const [resp] = await Promise.all([fetchPromise, delayPromise]);
       const resData = await resp.json();
       
       if (resData.status === "success") {
+        btn.innerText = "訂單已傳送！"; // 2. 成功後切換文字
         alert(`訂單建立成功！單號：${resData.orderId}`);
         liff.closeWindow();
       } else {
